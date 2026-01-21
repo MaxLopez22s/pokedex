@@ -1,0 +1,35 @@
+.layout {
+  display: flex;
+}
+
+.content {
+  padding: 1rem;
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+  img {
+    width: 96px;
+  }
+
+  .type {
+    display: inline-block;
+    background: #eee;
+    margin: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+}

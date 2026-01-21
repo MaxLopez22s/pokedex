@@ -1,0 +1,21 @@
+.sidebar {
+  width: 220px;
+  background: #ef5350;
+  padding: 1rem;
+  color: white;
+
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    background: white;
+    color: #333;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &:hover {
+      background: #ffcdd2;
+    }
+  }
+}

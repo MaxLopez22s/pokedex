@@ -1,0 +1,12 @@
+<aside class="sidebar">
+  <h3>Tipos</h3>
+
+  <button (click)="selectType('all')">Todos</button>
+
+  <button
+    *ngFor="let type of types"
+    (click)="selectType(type.name)"
+  >
+    {{ type.name | titlecase }}
+  </button>
+</aside>

@@ -1,0 +1,26 @@
+<div class="layout">
+  <app-sidebar (typeSelected)="filterByType($event)" />
+
+  <main class="content">
+    <h1>Pokédex</h1>
+
+    <div *ngIf="loading">Cargando...</div>
+
+    <div class="grid">
+      <div class="card" *ngFor="let pokemon of pokemons">
+        <img
+          [src]="pokemon.sprites.front_default"
+          [alt]="pokemon.name"
+        />
+        <h4>{{ pokemon.name | titlecase }}</h4>
+
+        <span
+          class="type"
+          *ngFor="let t of pokemon.types"
+        >
+          {{ t.type.name }}
+        </span>
+      </div>
+    </div>
+  </main>
+</div>
