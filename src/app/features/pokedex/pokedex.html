@@ -1,26 +1,61 @@
 <div class="layout">
-  <app-sidebar (typeSelected)="filterByType($event)" />
+    <button
+    class="floating-menu"
+    (click)="showSidebar = !showSidebar"
+    aria-label="toggle sidebar">☰</button>
+
+  <app-sidebar class="sidebar"
+  [class.open]="showSidebar"
+  (typeSelected)="filterByType($event)" />
 
   <main class="content">
     <h1>Pokédex</h1>
 
     <div *ngIf="loading">Cargando...</div>
+    <!--<button class="toggle-sidebar" (click)="showSidebar = !showSidebar">
+        {{ showSidebar ? 'Ocultar filtros' : 'Mostrar filtros' }}
+      </button>-->
 
-    <div class="grid">
-      <div class="card" *ngFor="let pokemon of pokemons">
-        <img
-          [src]="pokemon.sprites.front_default"
-          [alt]="pokemon.name"
+    <div class="search-container">
+      <div class="search-box">
+        <input 
+        type="text"
+        placeholder="Buscar por nombre o número"
+        [(ngModel)]="searchTerm"
+        (input)="updateSuggestions()"
+        (focus)="showSuggestions = true"
         />
-        <h4>{{ pokemon.name | titlecase }}</h4>
 
-        <span
-          class="type"
-          *ngFor="let t of pokemon.types"
-        >
-          {{ t.type.name }}
-        </span>
+        <button (click)="searchPokemon()">Buscar</button>
       </div>
+
+      <ul class="suggestions" *ngIf="showSuggestions">
+        <li
+        *ngFor="let suggestion of suggestions"
+        (click)="selectSuggestion(suggestion)"
+        >
+        #{{ suggestion.id }} - {{ suggestion.name | titlecase }}
+        </li>
+      </ul>
+
     </div>
+     <div class="grid-wrapper" [class.hidden]="!showGrid">
+          <div class="grid">
+            <div class="card" *ngFor="let pokemon of pokemons">
+              <img
+                [src]="pokemon.sprites.front_default"
+                [alt]="pokemon.name"
+              />
+              <h4>{{ pokemon.name | titlecase }}</h4>
+
+              <span
+                class="type"
+                *ngFor="let t of pokemon.types"
+              >
+                {{ t.type.name }}
+              </span>
+            </div>
+          </div>
+        </div>
   </main>
 </div>
