@@ -1,21 +1,59 @@
-.sidebar {
+:host {
+  position: fixed;
+  top: 0;
+  left: -220px;
   width: 220px;
+  height: 100vh;
+  z-index: 1000;
+  transition: left 0.3s ease;
+  display: block;
+
+  @media (max-width: 768px) {
+    // En móvil, el sidebar se superpone
+    z-index: 1000;
+  }
+
+  @media (min-width: 769px) {
+    // En desktop, el sidebar empuja el contenido
+    z-index: 999;
+  }
+}
+
+:host.open {
+  left: 0;
+}
+
+aside {
+  width: 100%;
+  height: 100%;
   background: #ef5350;
   padding: 1rem;
   color: white;
+  overflow-y: auto;
+}
 
-  button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-    background: white;
-    color: #333;
-    border: none;
-    padding: 0.5rem;
-    cursor: pointer;
-    border-radius: 4px;
+h3 {
+  margin-top: 60px;
+  margin-bottom: 1rem;
+}
 
-    &:hover {
-      background: #ffcdd2;
-    }
+button {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  background: white;
+  color: #333;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #ffcdd2;
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 }

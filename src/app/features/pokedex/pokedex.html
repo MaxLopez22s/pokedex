@@ -1,28 +1,39 @@
-<div class="layout">
+<div class="layout" [class.detail-page-open]="showModal">
     <button
     class="floating-menu"
+    [class.active]="showSidebar"
     (click)="showSidebar = !showSidebar"
-    aria-label="toggle sidebar">☰</button>
+    aria-label="toggle sidebar">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
 
-  <app-sidebar class="sidebar"
-  [class.open]="showSidebar"
+  <div class="overlay" *ngIf="showSidebar" (click)="showSidebar = false"></div>
+
+  <app-sidebar
+  [isOpen]="showSidebar"
   (typeSelected)="filterByType($event)" />
 
-  <main class="content">
+  <main class="content" [class.sidebar-open]="showSidebar">
     <h1>Pokédex</h1>
 
-    <div *ngIf="loading">Cargando...</div>
-    <!--<button class="toggle-sidebar" (click)="showSidebar = !showSidebar">
-        {{ showSidebar ? 'Ocultar filtros' : 'Mostrar filtros' }}
-      </button>-->
+    <div class="loading-container" *ngIf="loading">
+      <div class="loading-spinner"></div>
+      <p>Cargando Pokémon...</p>
+      <p class="loading-progress" *ngIf="filterMode === 'all'">
+        Página {{ currentPage }}
+      </p>
+    </div>
 
-    <div class="search-container">
+    <div class="search-container" *ngIf="!loading">
       <div class="search-box">
         <input 
         type="text"
         placeholder="Buscar por nombre o número"
         [(ngModel)]="searchTerm"
         (input)="updateSuggestions()"
+        (keydown)="onSearchKeydown($event)"
         (focus)="showSuggestions = true"
         />
 
@@ -39,23 +50,159 @@
       </ul>
 
     </div>
-     <div class="grid-wrapper" [class.hidden]="!showGrid">
-          <div class="grid">
-            <div class="card" *ngFor="let pokemon of pokemons">
-              <img
-                [src]="pokemon.sprites.front_default"
-                [alt]="pokemon.name"
-              />
-              <h4>{{ pokemon.name | titlecase }}</h4>
-
-              <span
-                class="type"
-                *ngFor="let t of pokemon.types"
-              >
-                {{ t.type.name }}
-              </span>
+     <div class="grid-wrapper" [class.hidden]="!showGrid" *ngIf="!loading">
+          <div class="no-results" *ngIf="pokemons.length === 0 && !loading">
+            <p>No se encontraron Pokémon</p>
+            <button (click)="resetToAll()" class="reset-btn">
+              Mostrar todos
+            </button>
+          </div>
+          <div class="grid" *ngIf="pokemons.length > 0">
+            <div class="pagination-info">
+              <p>Mostrando {{ getPageInfo() }} Pokémon ({{ getPageRange() }})</p>
             </div>
+            <div class="card" *ngFor="let pokemon of paginatedPokemons" [style.border-top-color]="getTypeColor(getFirstTypeName(pokemon))" (click)="openPokemonDetail(pokemon)" style="cursor: pointer;">
+              <div class="card-header">
+                <span class="pokemon-id">#{{ getPokemonId(pokemon) }}</span>
+              </div>
+              <div class="card-image">
+                <img
+                  [src]="getSpriteUrl(pokemon)"
+                  [alt]="pokemon.name"
+                  loading="lazy"
+                  (error)="onSpriteError($event)"
+                />
+              </div>
+              <div class="card-body">
+                <h4>{{ pokemon.name | titlecase }}</h4>
+                
+                <div class="types">
+                  <span
+                    class="type"
+                    *ngFor="let t of pokemon.types"
+                    [style.background-color]="getTypeColor(t.type.name)"
+                  >
+                    {{ t.type.name | titlecase }}
+                  </span>
+                </div>
+
+                <div class="pokemon-info">
+                  <div class="info-item">
+                    <span class="info-label">Altura</span>
+                    <span class="info-value">{{ (pokemon.height / 10).toFixed(1) }} m</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Peso</span>
+                    <span class="info-value">{{ (pokemon.weight / 10).toFixed(1) }} kg</span>
+                  </div>
+                </div>
+
+                <div class="stats" *ngIf="pokemon.stats && pokemon.stats.length > 0">
+                  <div class="stat-item" *ngFor="let stat of pokemon.stats.slice(0, 3)">
+                    <span class="stat-name">{{ stat.stat.name | titlecase }}</span>
+                    <div class="stat-bar">
+                      <div class="stat-fill" [style.width.%]="(stat.base_stat / 150) * 100" [style.background-color]="getTypeColor(getFirstTypeName(pokemon))"></div>
+                    </div>
+                    <span class="stat-value">{{ stat.base_stat }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pagination" *ngIf="pokemons.length > 0 && totalPages > 1">
+            <button 
+              class="pagination-btn" 
+              (click)="previousPage()" 
+              [disabled]="currentPage === 1"
+              aria-label="Página anterior">
+              ← Anterior
+            </button>
+            
+            <div class="pagination-pages">
+              <button
+                *ngFor="let page of [].constructor(totalPages); let i = index"
+                class="pagination-page"
+                [class.active]="currentPage === i + 1"
+                (click)="goToPage(i + 1)">
+                {{ i + 1 }}
+              </button>
+            </div>
+            
+            <button 
+              class="pagination-btn" 
+              (click)="nextPage()" 
+              [disabled]="currentPage === totalPages"
+              aria-label="Página siguiente">
+              Siguiente →
+            </button>
           </div>
         </div>
   </main>
 </div>
+
+<!-- Vista de detalles del Pokémon (página completa) -->
+<div class="pokemon-detail-page" *ngIf="showModal && selectedPokemon">
+    <div class="detail-header" [style.background]="getModalGradient(selectedPokemon)">
+      <button class="detail-back-btn" (click)="closePokemonDetail()" aria-label="Volver">
+        ← Volver
+      </button>
+      
+      <div class="detail-hero">
+        <div class="detail-pokemon-image">
+          <img [src]="getSpriteUrl(selectedPokemon)" [alt]="selectedPokemon.name" (error)="onSpriteError($event)" />
+        </div>
+        <div class="detail-pokemon-info">
+          <span class="detail-pokemon-id">#{{ getPokemonId(selectedPokemon) }}</span>
+          <h1>{{ selectedPokemon.name | titlecase }}</h1>
+          <div class="detail-types">
+            <span
+              class="type"
+              *ngFor="let t of selectedPokemon.types"
+              [style.background-color]="getTypeColor(t.type.name)"
+            >
+              {{ t.type.name | titlecase }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="detail-section">
+        <h2>Información Básica</h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <span class="info-label">Altura</span>
+            <span class="info-value-large">{{ (selectedPokemon.height / 10).toFixed(1) }} m</span>
+          </div>
+          <div class="info-card">
+            <span class="info-label">Peso</span>
+            <span class="info-value-large">{{ (selectedPokemon.weight / 10).toFixed(1) }} kg</span>
+          </div>
+          <div class="info-card" *ngIf="selectedPokemon.base_experience">
+            <span class="info-label">Experiencia Base</span>
+            <span class="info-value-large">{{ selectedPokemon.base_experience }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="selectedPokemon.stats && selectedPokemon.stats.length > 0">
+        <h2>Estadísticas</h2>
+        <div class="stats-container">
+          <div class="stat-row" *ngFor="let stat of selectedPokemon.stats">
+            <div class="stat-header">
+              <span class="stat-name">{{ getStatName(stat.stat.name) }}</span>
+              <span class="stat-value">{{ stat.base_stat }}</span>
+            </div>
+            <div class="stat-bar-full">
+              <div 
+                class="stat-fill-full" 
+                [style.width.%]="(stat.base_stat / 255) * 100"
+                [style.background-color]="getTypeColor(getFirstTypeName(selectedPokemon))">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
